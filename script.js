@@ -7,14 +7,19 @@ scene.background = new THREE.Color('#1a1a1a');
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
 
-// 新增動態計算相機距離的函式 (RWD)
+// RWD：動態計算相機距離 (Z軸)
 function getCameraZ() {
-    // 如果是手機版尺寸 (寬度小於 768)，就把相機拉遠到 5.5；電腦版維持 3.5
     return window.innerWidth < 768 ? 5.5 : 3.5;
 }
 
-// 初始視角：正對 Z 軸，距離依據螢幕寬度決定
-const defaultCameraPos = new THREE.Vector3(0, 0, getCameraZ());
+// RWD：動態計算相機高度 (Y軸)
+// 手機版將相機與對焦點往下移 (-0.8)，這樣球體在畫面上就會「相對偏上」
+function getCameraY() {
+    return window.innerWidth < 768 ? -0.8 : 0;
+}
+
+// 初始視角設定
+const defaultCameraPos = new THREE.Vector3(0, getCameraY(), getCameraZ());
 camera.position.copy(defaultCameraPos);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -25,6 +30,9 @@ document.getElementById('canvas-container').appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
+// 將旋轉中心也同步設定到新的 Y 軸高度，確保拖曳旋轉時不會歪掉
+controls.target.set(0, getCameraY(), 0); 
+controls.update();
 
 // --- 2. 燈光與座標軸 ---
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -134,9 +142,10 @@ btnForehand.addEventListener('click', () => {
 });
 
 btnReset.addEventListener('click', () => {
+    const ty = getCameraY();
+    defaultCameraPos.set(0, ty, getCameraZ());
     camera.position.copy(defaultCameraPos);
-    camera.lookAt(0, 0, 0);
-    controls.target.set(0, 0, 0);
+    controls.target.set(0, ty, 0);
     controls.update();
 });
 
@@ -148,10 +157,15 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     
-    // RWD 動態調整相機距離
+    // RWD 動態調整相機距離與高度
     const newZ = getCameraZ();
-    camera.position.z = newZ;
-    defaultCameraPos.z = newZ; // 更新預設值，確保「重設視角」按鈕運作正常
+    const newY = getCameraY();
+    
+    // 更新軌跡球目標，保持旋轉中心正確
+    controls.target.y = newY; 
+    
+    // 更新預設值，確保「重設視角」按鈕運作正常
+    defaultCameraPos.set(0, newY, newZ); 
 });
 
 function animate() {
