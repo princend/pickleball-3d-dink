@@ -1,13 +1,20 @@
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // --- 1. 基本場景設定 ---
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#1a1a1a');
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-// 初始視角：正對 Z 軸 (0, 0, 3.5)
-const defaultCameraPos = new THREE.Vector3(0, 0, 3.5);
+
+// 新增動態計算相機距離的函式 (RWD)
+function getCameraZ() {
+    // 如果是手機版尺寸 (寬度小於 768)，就把相機拉遠到 5.5；電腦版維持 3.5
+    return window.innerWidth < 768 ? 5.5 : 3.5;
+}
+
+// 初始視角：正對 Z 軸，距離依據螢幕寬度決定
+const defaultCameraPos = new THREE.Vector3(0, 0, getCameraZ());
 camera.position.copy(defaultCameraPos);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -26,23 +33,19 @@ const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
 dirLight.position.set(5, 10, 7);
 scene.add(dirLight);
 
-// 座標軸 (紅X, 綠Y, 藍Z) 長度設為 1.5
 const axesHelper = new THREE.AxesHelper(1.5);
 scene.add(axesHelper);
 
 // --- 3. 製作 40孔匹克球 ---
-// 用 Canvas 動態繪製 40 個孔洞的紋理，包覆到球體上
 function createPickleballTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 1024;
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
     
-    // 底色黃色
     ctx.fillStyle = '#F4E022';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // 利用費氏數列(Fibonacci sphere)在球面上均勻分佈 40 個黑洞
     ctx.fillStyle = '#222222';
     const samples = 40;
     const phi = Math.PI * (3 - Math.sqrt(5)); 
@@ -63,7 +66,6 @@ function createPickleballTexture() {
         const cy = (1 - v) * canvas.height;
 
         ctx.beginPath();
-        // 為了防止球極點變形，緯度越高橢圓要稍微壓扁，這裡採用簡單圓形近似
         ctx.arc(cx, cy, 18, 0, 2 * Math.PI);
         ctx.fill();
     }
@@ -80,19 +82,17 @@ const pickleball = new THREE.Mesh(ballGeo, ballMat);
 scene.add(pickleball);
 
 // --- 4. 擊球點與粗體箭頭 ---
-// 擊球紅點
 const pointGeo = new THREE.SphereGeometry(0.08, 32, 32);
 const pointMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 const hitPoint = new THREE.Mesh(pointGeo, pointMat);
 scene.add(hitPoint);
 
-// 自訂粗體箭頭 (取代預設太細的 ArrowHelper)
 const arrowGroup = new THREE.Group();
-const arrowMat = new THREE.MeshBasicMaterial({ color: 0xFF5500 }); // 霓虹橘
+const arrowMat = new THREE.MeshBasicMaterial({ color: 0xFF5500 });
 const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 16), arrowMat);
-shaft.position.y = 0.6; // 圓柱中心上移一半
+shaft.position.y = 0.6;
 const head = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 16), arrowMat);
-head.position.y = 1.2 + 0.15; // 放在圓柱頂端
+head.position.y = 1.2 + 0.15;
 arrowGroup.add(shaft);
 arrowGroup.add(head);
 scene.add(arrowGroup);
@@ -100,29 +100,23 @@ scene.add(arrowGroup);
 // --- 5. 狀態更新與控制邏輯 ---
 const states = {
     backhand: {
-        origin: new THREE.Vector3(-0.62, -0.62, 0.48), // 左後下方
-        dir: new THREE.Vector3(1, 0.5, -1).normalize() // 往右前上方推
+        origin: new THREE.Vector3(-0.62, -0.62, 0.48),
+        dir: new THREE.Vector3(1, 0.5, -1).normalize()
     },
     forehand: {
-        origin: new THREE.Vector3(0.62, -0.62, 0.48),  // 右後下方
-        dir: new THREE.Vector3(-1, 0.5, -1).normalize()// 往左前上方推
+        origin: new THREE.Vector3(0.62, -0.62, 0.48),
+        dir: new THREE.Vector3(-1, 0.5, -1).normalize()
     }
 };
 
 function updateState(type) {
     const state = states[type];
-    
-    // 更新紅點位置
     hitPoint.position.copy(state.origin);
-    
-    // 更新箭頭位置與方向
     arrowGroup.position.copy(state.origin);
-    // 將箭頭原本朝上的 Y 軸，對齊到目標方向
     const axis = new THREE.Vector3(0, 1, 0); 
     arrowGroup.quaternion.setFromUnitVectors(axis, state.dir);
 }
 
-// 綁定 UI 按鈕
 const btnBackhand = document.getElementById('btn-backhand');
 const btnForehand = document.getElementById('btn-forehand');
 const btnReset = document.getElementById('btn-reset');
@@ -140,14 +134,12 @@ btnForehand.addEventListener('click', () => {
 });
 
 btnReset.addEventListener('click', () => {
-    // 平滑回到初始正對視角
     camera.position.copy(defaultCameraPos);
     camera.lookAt(0, 0, 0);
     controls.target.set(0, 0, 0);
     controls.update();
 });
 
-// 初始化畫面為反手
 updateState('backhand');
 
 // --- 6. 渲染迴圈與視窗 RWD ---
@@ -155,11 +147,16 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // RWD 動態調整相機距離
+    const newZ = getCameraZ();
+    camera.position.z = newZ;
+    defaultCameraPos.z = newZ; // 更新預設值，確保「重設視角」按鈕運作正常
 });
 
 function animate() {
     requestAnimationFrame(animate);
-    controls.update(); // 處理慣性滑動
+    controls.update();
     renderer.render(scene, camera);
 }
 animate();
