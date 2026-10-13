@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="./style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pickleball dink 3d </title>
+    <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+</script>
+  </head>
+  <body>
+
+    <script type="module" src="./script.js"></script>
+    <div id="canvas-container"></div>
+<div id="ui-container">
+  <div class="title">單手反/正手斜丁 3D 擊球點分析</div>
+  <div class="controls">
+    <button id="btn-backhand" class="active">單拍反手斜丁 (7-8點鐘)</button>
+    <button id="btn-forehand">單拍正手斜丁 (4-5點鐘)</button>
+    <button id="btn-reset">重設視角 (Z軸朝前)</button>
+  </div>
+  <div class="legend">
+    🔴 X軸(左右) / 🟢 Y軸(上下) / 🔵 Z軸(前後深度)<br>
+    💡 Z 軸正對著你，代表球的「後半部」
+  </div>
+</div>
+  </body>
+</html>

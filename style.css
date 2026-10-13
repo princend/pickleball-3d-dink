@@ -1,0 +1,72 @@
+html {
+  height: 100%;
+  background: 50% 50% no-repeat
+    url('data:image/svg+xml,<svg viewBox="-20 -5 60 40" width="140" xmlns="http://www.w3.org/2000/svg" opacity="0.2"><path d="M1 8l11-7 11 7v8l-11 7-11-7zm0 0l11 8 11-8m0 8L12 8 1 16M12 1v7m0 8v7" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2"/><text x="-12" y="32" font-size="5" font-family="monospace" fill="currentColor">Built on CodePen</text></svg>');
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: #111;
+  font-family: '微軟正黑體', sans-serif;
+}
+
+#canvas-container {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+#ui-container {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: white;
+  pointer-events: none; /* 讓滑鼠可以穿透點擊背後的 3D 畫布 */
+}
+
+.title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+
+.controls {
+  pointer-events: auto; /* 恢復按鈕的點擊功能 */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+button {
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+button:hover {
+  background-color: #555;
+}
+
+button.active {
+  background-color: #FF5500;
+  border-color: #FF5500;
+  font-weight: bold;
+}
+
+.legend {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #ccc;
+  line-height: 1.5;
+  background: rgba(0,0,0,0.5);
+  padding: 10px;
+  border-radius: 6px;
+}
