@@ -15,7 +15,7 @@ function getCameraZ() {
 // RWD：動態計算相機高度 (Y軸)
 // 手機版將相機與對焦點往下移 (-0.8)，這樣球體在畫面上就會「相對偏上」
 function getCameraY() {
-    return window.innerWidth < 768 ? -0.8 : 0;
+    return window.innerWidth < 768 ? -1.2 : 0;
 }
 
 // 初始視角設定
