@@ -7,19 +7,13 @@ scene.background = new THREE.Color('#1a1a1a');
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
 
-// RWD：動態計算相機距離 (Z軸)
+// RWD: 只改變相機 Z 軸距離來適應螢幕寬度，不碰 Y 軸
 function getCameraZ() {
     return window.innerWidth < 768 ? 5.5 : 3.5;
 }
 
-// RWD：動態計算相機高度 (Y軸)
-// 手機版將相機與對焦點往下移 (-0.8)，這樣球體在畫面上就會「相對偏上」
-function getCameraY() {
-    return window.innerWidth < 768 ? -1.2 : 0;
-}
-
-// 初始視角設定
-const defaultCameraPos = new THREE.Vector3(0, getCameraY(), getCameraZ());
+// 初始相機位置：Y 軸永遠為 0
+const defaultCameraPos = new THREE.Vector3(0, 0, getCameraZ());
 camera.position.copy(defaultCameraPos);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -30,8 +24,8 @@ document.getElementById('canvas-container').appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-// 將旋轉中心也同步設定到新的 Y 軸高度，確保拖曳旋轉時不會歪掉
-controls.target.set(0, getCameraY(), 0); 
+// 確保旋轉中心永遠在原點
+controls.target.set(0, 0, 0); 
 controls.update();
 
 // --- 2. 燈光與座標軸 ---
@@ -142,10 +136,11 @@ btnForehand.addEventListener('click', () => {
 });
 
 btnReset.addEventListener('click', () => {
-    const ty = getCameraY();
-    defaultCameraPos.set(0, ty, getCameraZ());
+    // 重設時 Y 軸依然保持 0
+    defaultCameraPos.set(0, 0, getCameraZ());
     camera.position.copy(defaultCameraPos);
-    controls.target.set(0, ty, 0);
+    camera.lookAt(0, 0, 0);
+    controls.target.set(0, 0, 0);
     controls.update();
 });
 
@@ -157,15 +152,10 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     
-    // RWD 動態調整相機距離與高度
+    // 視窗縮放時，只更新相機的 Z 軸距離，Y 軸永遠保持為 0
     const newZ = getCameraZ();
-    const newY = getCameraY();
-    
-    // 更新軌跡球目標，保持旋轉中心正確
-    controls.target.y = newY; 
-    
-    // 更新預設值，確保「重設視角」按鈕運作正常
-    defaultCameraPos.set(0, newY, newZ); 
+    camera.position.z = newZ;
+    defaultCameraPos.set(0, 0, newZ); 
 });
 
 function animate() {
