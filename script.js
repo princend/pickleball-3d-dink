@@ -121,4 +121,80 @@ scene.add(pickleball);
 // --- 4. 擊球點與粗體箭頭 ---
 const pointGeo = new THREE.SphereGeometry(0.08, 32, 32);
 const pointMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-const hitPoint =
+const hitPoint = new THREE.Mesh(pointGeo, pointMat);
+scene.add(hitPoint);
+
+const arrowGroup = new THREE.Group();
+const arrowMat = new THREE.MeshBasicMaterial({ color: 0xFF5500 });
+const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 16), arrowMat);
+shaft.position.y = 0.6;
+const head = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.3, 16), arrowMat);
+head.position.y = 1.2 + 0.15;
+arrowGroup.add(shaft);
+arrowGroup.add(head);
+scene.add(arrowGroup);
+
+// --- 5. 狀態更新與控制邏輯 ---
+const states = {
+    backhand: {
+        origin: new THREE.Vector3(-0.62, -0.62, 0.48),
+        dir: new THREE.Vector3(1, 0.5, -1).normalize()
+    },
+    forehand: {
+        origin: new THREE.Vector3(0.62, -0.62, 0.48),
+        dir: new THREE.Vector3(-1, 0.5, -1).normalize()
+    }
+};
+
+function updateState(type) {
+    const state = states[type];
+    hitPoint.position.copy(state.origin);
+    arrowGroup.position.copy(state.origin);
+    const axis = new THREE.Vector3(0, 1, 0); 
+    arrowGroup.quaternion.setFromUnitVectors(axis, state.dir);
+}
+
+const btnBackhand = document.getElementById('btn-backhand');
+const btnForehand = document.getElementById('btn-forehand');
+const btnReset = document.getElementById('btn-reset');
+
+btnBackhand.addEventListener('click', () => {
+    updateState('backhand');
+    btnBackhand.classList.add('active');
+    btnForehand.classList.remove('active');
+});
+
+btnForehand.addEventListener('click', () => {
+    updateState('forehand');
+    btnForehand.classList.add('active');
+    btnBackhand.classList.remove('active');
+});
+
+btnReset.addEventListener('click', () => {
+    defaultCameraPos.set(0, 0, getCameraZ());
+    camera.position.copy(defaultCameraPos);
+    camera.lookAt(0, 0, 0);
+    controls.target.set(0, 0, 0);
+    controls.update();
+});
+
+updateState('backhand');
+
+// --- 6. 渲染迴圈與視窗 RWD ---
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // 視窗縮放時，只更新相機的 Z 軸距離，Y 軸永遠保持為 0
+    const newZ = getCameraZ();
+    camera.position.z = newZ;
+    defaultCameraPos.set(0, 0, newZ); 
+});
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+}
+animate();
